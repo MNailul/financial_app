@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../services/preference_service.dart';
 import '../utils/formatters.dart';
+import 'category_management_page.dart';
 
 class SettingsPage extends StatefulWidget {
   final VoidCallback onSettingsChanged;
@@ -160,6 +161,19 @@ class _SettingsPageState extends State<SettingsPage> {
         children: [
           const SizedBox(height: 12),
           _buildSectionHeader('Preferensi Finansial (Assesment Key)'),
+          
+          // Manage Categories Preference
+          _buildSettingTile(
+            title: 'Kelola Kategori',
+            subtitle: 'Atur kategori pengeluaran & pemasukan Anda',
+            trailing: const Icon(Icons.chevron_right, color: Color(0xFF118EEA)),
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const CategoryManagementPage()),
+              );
+            },
+          ),
           
           // Currency Symbol Preference
           _buildSettingTile(
@@ -330,6 +344,7 @@ class _SettingsPageState extends State<SettingsPage> {
     required String title,
     required String subtitle,
     required Widget trailing,
+    VoidCallback? onTap,
   }) {
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
@@ -345,17 +360,21 @@ class _SettingsPageState extends State<SettingsPage> {
           )
         ]
       ),
-      child: ListTile(
-        contentPadding: EdgeInsets.zero,
-        title: Text(
-          title,
-          style: const TextStyle(color: Colors.black87, fontWeight: FontWeight.bold, fontSize: 14),
+      child: Material(
+        color: Colors.transparent,
+        child: ListTile(
+          contentPadding: EdgeInsets.zero,
+          title: Text(
+            title,
+            style: const TextStyle(color: Colors.black87, fontWeight: FontWeight.bold, fontSize: 14),
+          ),
+          subtitle: Text(
+            subtitle,
+            style: TextStyle(color: Colors.grey[600], fontSize: 11),
+          ),
+          trailing: trailing,
+          onTap: onTap,
         ),
-        subtitle: Text(
-          subtitle,
-          style: TextStyle(color: Colors.grey[600], fontSize: 11),
-        ),
-        trailing: trailing,
       ),
     );
   }

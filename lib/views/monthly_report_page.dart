@@ -4,6 +4,7 @@ import '../models/transaction.dart';
 import '../services/database_helper.dart';
 import '../services/preference_service.dart';
 import '../utils/formatters.dart';
+import 'transaction_form_page.dart';
 
 class MonthlyReportPage extends StatefulWidget {
   final VoidCallback onDataChanged;
@@ -442,6 +443,20 @@ class MonthlyReportPageState extends State<MonthlyReportPage> {
                             ]
                           ),
                           child: ListTile(
+                            onTap: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => TransactionFormPage(
+                                    transaction: tx,
+                                    onSave: () {
+                                      _loadMonthlyData();
+                                      widget.onDataChanged();
+                                    },
+                                  ),
+                                ),
+                              );
+                            },
                             leading: Container(
                               padding: const EdgeInsets.all(10),
                               decoration: BoxDecoration(

@@ -5,6 +5,7 @@ import '../models/transaction_category.dart';
 import '../services/database_helper.dart';
 import '../services/preference_service.dart';
 import '../utils/formatters.dart';
+import 'transaction_form_page.dart';
 
 class DashboardPage extends StatefulWidget {
   final VoidCallback onDataChanged;
@@ -154,275 +155,18 @@ class DashboardPageState extends State<DashboardPage> {
     }
   }
 
-  void _showAddTransactionSheet() async {
-    final categories = await _dbHelper.getCategories();
-    if (!mounted) return;
-
-    final titleController = TextEditingController();
-    final amountController = TextEditingController();
-    final notesController = TextEditingController();
-    String type = 'expense';
-    TransactionCategory? selectedCategory = categories.firstWhere(
-      (c) => c.type == type,
-      orElse: () => categories.first,
-    );
-
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.white,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-      ),
-      builder: (sheetContext) {
-        return StatefulBuilder(
-          builder: (BuildContext context, StateSetter setSheetState) {
-            // Filter categories based on transaction type
-            final filteredCats = categories.where((c) => c.type == type).toList();
-            if (selectedCategory != null && selectedCategory!.type != type) {
-              selectedCategory = filteredCats.isNotEmpty ? filteredCats.first : null;
-            }
-
-            return Padding(
-              padding: EdgeInsets.only(
-                bottom: MediaQuery.of(context).viewInsets.bottom + 24,
-                top: 24,
-                left: 24,
-                right: 24,
-              ),
-              child: SingleChildScrollView(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        const Text(
-                          'Tambah Transaksi',
-                          style: TextStyle(
-                            color: Colors.black87,
-                            fontSize: 20,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        IconButton(
-                          icon: Icon(Icons.close, color: Colors.grey[600]),
-                          onPressed: () => Navigator.pop(sheetContext),
-                        )
-                      ],
-                    ),
-                    const SizedBox(height: 16),
-                    // Type Selector (Income/Expense)
-                    Row(
-                      children: [
-                        Expanded(
-                          child: GestureDetector(
-                            onTap: () {
-                              setSheetState(() {
-                                type = 'expense';
-                                selectedCategory = filteredCats.isNotEmpty ? filteredCats.first : null;
-                              });
-                            },
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(vertical: 12),
-                              decoration: BoxDecoration(
-                                color: type == 'expense' ? Colors.red.withOpacity(0.2) : Colors.transparent,
-                                border: Border.all(
-                                  color: type == 'expense' ? Colors.red : Colors.grey.shade700,
-                                ),
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                              child: Center(
-                                child: Text(
-                                  'Pengeluaran',
-                                  style: TextStyle(
-                                    color: type == 'expense' ? Colors.red : Colors.white70,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: GestureDetector(
-                            onTap: () {
-                              setSheetState(() {
-                                type = 'income';
-                                selectedCategory = filteredCats.isNotEmpty ? filteredCats.first : null;
-                              });
-                            },
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(vertical: 12),
-                              decoration: BoxDecoration(
-                                color: type == 'income' ? Colors.green.withOpacity(0.2) : Colors.transparent,
-                                border: Border.all(
-                                  color: type == 'income' ? Colors.green : Colors.grey.shade700,
-                                ),
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                              child: Center(
-                                child: Text(
-                                  'Pemasukan',
-                                  style: TextStyle(
-                                    color: type == 'income' ? Colors.green : Colors.white70,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 16),
-                    // Amount Input
-                    TextField(
-                      controller: amountController,
-                      keyboardType: TextInputType.number,
-                      style: const TextStyle(color: Colors.black87),
-                      decoration: InputDecoration(
-                        labelText: 'Nominal ($type)',
-                        labelStyle: TextStyle(color: Colors.grey[600]),
-                        prefixText: '$_currency ',
-                        prefixStyle: const TextStyle(color: Colors.black87, fontWeight: FontWeight.bold),
-                        enabledBorder: OutlineInputBorder(
-                          borderSide: BorderSide(color: Colors.grey.shade300),
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        focusedBorder: OutlineInputBorder(
-                          borderSide: const BorderSide(color: Color(0xFF118EEA)),
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                    // Title Input
-                    TextField(
-                      controller: titleController,
-                      style: const TextStyle(color: Colors.black87),
-                      decoration: InputDecoration(
-                        labelText: 'Judul Transaksi',
-                        labelStyle: TextStyle(color: Colors.grey[600]),
-                        enabledBorder: OutlineInputBorder(
-                          borderSide: BorderSide(color: Colors.grey.shade300),
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        focusedBorder: OutlineInputBorder(
-                          borderSide: const BorderSide(color: Color(0xFF118EEA)),
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                    // Category Selector
-                    DropdownButtonFormField<TransactionCategory>(
-                      value: selectedCategory,
-                      dropdownColor: Colors.white,
-                      decoration: InputDecoration(
-                        labelText: 'Kategori',
-                        labelStyle: TextStyle(color: Colors.grey[600]),
-                        enabledBorder: OutlineInputBorder(
-                          borderSide: BorderSide(color: Colors.grey.shade300),
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        focusedBorder: OutlineInputBorder(
-                          borderSide: const BorderSide(color: Color(0xFF118EEA)),
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                      ),
-                      style: const TextStyle(color: Colors.black87),
-                      items: filteredCats.map((cat) {
-                        return DropdownMenuItem<TransactionCategory>(
-                          value: cat,
-                          child: Row(
-                            children: [
-                              Icon(
-                                IconData(cat.iconCode, fontFamily: 'MaterialIcons'),
-                                color: Color(cat.colorValue),
-                                size: 20,
-                              ),
-                              const SizedBox(width: 12),
-                              Text(cat.name),
-                            ],
-                          ),
-                        );
-                      }).toList(),
-                      onChanged: (cat) {
-                        setSheetState(() {
-                          selectedCategory = cat;
-                        });
-                      },
-                    ),
-                    const SizedBox(height: 16),
-                    // Notes Input
-                    TextField(
-                      controller: notesController,
-                      style: const TextStyle(color: Colors.black87),
-                      decoration: InputDecoration(
-                        labelText: 'Catatan (Opsional)',
-                        labelStyle: TextStyle(color: Colors.grey[600]),
-                        enabledBorder: OutlineInputBorder(
-                          borderSide: BorderSide(color: Colors.grey.shade300),
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        focusedBorder: OutlineInputBorder(
-                          borderSide: const BorderSide(color: Color(0xFF118EEA)),
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 24),
-                    ElevatedButton(
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF118EEA),
-                        foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(vertical: 16),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                      ),
-                      onPressed: () async {
-                        final amt = double.tryParse(amountController.text);
-                        final title = titleController.text.trim();
-                        if (amt == null || amt <= 0 || title.isEmpty || selectedCategory == null) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(content: Text('Harap lengkapi semua input data')),
-                          );
-                          return;
-                        }
-
-                        final newTx = TransactionModel(
-                          title: title,
-                          amount: amt,
-                          type: type,
-                          categoryId: selectedCategory!.id!,
-                          categoryName: selectedCategory!.name,
-                          categoryIconCode: selectedCategory!.iconCode,
-                          categoryColorValue: selectedCategory!.colorValue,
-                          date: DateTime.now(),
-                          notes: notesController.text.isEmpty ? null : notesController.text,
-                        );
-
-                        await _dbHelper.insertTransaction(newTx);
-                        Navigator.pop(sheetContext);
-                        _loadDashboardData();
-                        widget.onDataChanged();
-                      },
-                      child: const Text(
-                        'Simpan Transaksi',
-                        style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-                      ),
-                    )
-                  ],
-                ),
-              ),
-            );
+  void _showAddTransactionSheet([TransactionModel? transaction]) async {
+    await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => TransactionFormPage(
+          transaction: transaction,
+          onSave: () {
+            _loadDashboardData();
+            widget.onDataChanged();
           },
-        );
-      },
+        ),
+      ),
     );
   }
 
@@ -871,6 +615,7 @@ class DashboardPageState extends State<DashboardPage> {
                         ]
                       ),
                       child: ListTile(
+                        onTap: () => _showAddTransactionSheet(tx),
                         leading: Container(
                           padding: const EdgeInsets.all(10),
                           decoration: BoxDecoration(
