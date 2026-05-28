@@ -3,6 +3,7 @@ import 'dashboard_page.dart';
 import 'monthly_report_page.dart';
 import 'saving_goals_page.dart';
 import 'settings_page.dart';
+import 'transaction_records_page.dart';
 import '../services/preference_service.dart';
 
 class MainNavigationHub extends StatefulWidget {
@@ -21,6 +22,8 @@ class _MainNavigationHubState extends State<MainNavigationHub> {
   final GlobalKey<DashboardPageState> _dashboardKey = GlobalKey();
   final GlobalKey<MonthlyReportPageState> _reportKey = GlobalKey();
   final GlobalKey<SavingGoalsPageState> _goalsKey = GlobalKey();
+  final GlobalKey<TransactionRecordsPageState> _recordsKey = GlobalKey();
+
   late final List<Widget> _pages;
 
   @override
@@ -31,6 +34,7 @@ class _MainNavigationHubState extends State<MainNavigationHub> {
       DashboardPage(key: _dashboardKey, onDataChanged: _syncState),
       MonthlyReportPage(key: _reportKey, onDataChanged: _syncState),
       SavingGoalsPage(key: _goalsKey, onDataChanged: _syncState),
+      TransactionRecordsPage(key: _recordsKey, onDataChanged: _syncState),
       SettingsPage(onSettingsChanged: _syncState),
     ];
   }
@@ -47,6 +51,7 @@ class _MainNavigationHubState extends State<MainNavigationHub> {
     _dashboardKey.currentState?.reload();
     _reportKey.currentState?.reload();
     _goalsKey.currentState?.reload();
+    _recordsKey.currentState?.reload();
     setState(() {});
   }
 
@@ -76,7 +81,7 @@ class _MainNavigationHubState extends State<MainNavigationHub> {
         });
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('PIN Salah! Silakan coba lagi.'),
+            content: Text('PIN salah. Silakan coba lagi.'),
             backgroundColor: Colors.redAccent,
             duration: Duration(seconds: 1),
           ),
@@ -114,7 +119,6 @@ class _MainNavigationHubState extends State<MainNavigationHub> {
                 style: TextStyle(color: Colors.grey[600], fontSize: 13),
               ),
               const SizedBox(height: 36),
-              // Dots representing entered pin
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: List.generate(4, (index) {
@@ -132,7 +136,6 @@ class _MainNavigationHubState extends State<MainNavigationHub> {
                 }),
               ),
               const SizedBox(height: 48),
-              // Numpad Keypad
               Expanded(
                 child: Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 48.0),
@@ -147,15 +150,14 @@ class _MainNavigationHubState extends State<MainNavigationHub> {
                     itemCount: 12,
                     itemBuilder: (context, index) {
                       if (index == 9) {
-                        // Empty space or clear
                         return const SizedBox();
                       }
+
                       if (index == 10) {
-                        // Digit '0'
                         return _buildNumButton('0');
                       }
+
                       if (index == 11) {
-                        // Delete Button
                         return InkWell(
                           onTap: _handlePinDelete,
                           borderRadius: BorderRadius.circular(50),
@@ -168,7 +170,6 @@ class _MainNavigationHubState extends State<MainNavigationHub> {
                         );
                       }
 
-                      // Digits 1-9
                       final digit = (index + 1).toString();
                       return _buildNumButton(digit);
                     },
@@ -181,13 +182,12 @@ class _MainNavigationHubState extends State<MainNavigationHub> {
       );
     }
 
-    final pages = _pages;
-
     final pageTitles = [
       'Dashboard Grafik',
       'Laporan Bulanan',
       'Target Tabungan',
-      'Pengaturan & Preferensi'
+      'Catatan Transaksi',
+      'Keamanan & Setelan',
     ];
 
     return Scaffold(
@@ -212,7 +212,7 @@ class _MainNavigationHubState extends State<MainNavigationHub> {
       ),
       body: IndexedStack(
         index: _currentIndex,
-        children: pages,
+        children: _pages,
       ),
       bottomNavigationBar: Container(
         decoration: BoxDecoration(
@@ -225,8 +225,8 @@ class _MainNavigationHubState extends State<MainNavigationHub> {
               color: Colors.black.withOpacity(0.05),
               blurRadius: 10,
               offset: const Offset(0, -5),
-            )
-          ]
+            ),
+          ],
         ),
         child: BottomNavigationBar(
           currentIndex: _currentIndex,
@@ -234,16 +234,18 @@ class _MainNavigationHubState extends State<MainNavigationHub> {
             setState(() {
               _currentIndex = index;
             });
+
             if (index == 0) _dashboardKey.currentState?.reload();
             if (index == 1) _reportKey.currentState?.reload();
             if (index == 2) _goalsKey.currentState?.reload();
+            if (index == 3) _recordsKey.currentState?.reload();
           },
           backgroundColor: Colors.white,
           selectedItemColor: const Color(0xFF118EEA),
           unselectedItemColor: Colors.grey.shade400,
           type: BottomNavigationBarType.fixed,
           elevation: 0,
-          selectedLabelStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 11),
+          selectedLabelStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 10),
           unselectedLabelStyle: const TextStyle(fontSize: 10),
           items: const [
             BottomNavigationBarItem(
@@ -262,9 +264,14 @@ class _MainNavigationHubState extends State<MainNavigationHub> {
               label: 'Target',
             ),
             BottomNavigationBarItem(
-              icon: Icon(Icons.settings_outlined),
-              activeIcon: Icon(Icons.settings),
-              label: 'Pengaturan',
+              icon: Icon(Icons.receipt_long_outlined),
+              activeIcon: Icon(Icons.receipt_long),
+              label: 'Catatan',
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.security_outlined),
+              activeIcon: Icon(Icons.security),
+              label: 'Setelan',
             ),
           ],
         ),
@@ -285,8 +292,8 @@ class _MainNavigationHubState extends State<MainNavigationHub> {
               color: Colors.black.withOpacity(0.05),
               blurRadius: 4,
               offset: const Offset(0, 2),
-            )
-          ]
+            ),
+          ],
         ),
         child: Center(
           child: Text(

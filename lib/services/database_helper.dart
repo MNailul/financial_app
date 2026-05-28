@@ -19,23 +19,19 @@ class DatabaseHelper {
   }
 
   Future<Database> _initDB(String filePath) async {
-    final dbPath = await getDatabasesPath();
-    final path = join(dbPath, filePath);
+  final dbPath = await getDatabasesPath();
+  final path = join(dbPath, filePath);
 
-    // Reset database to remove mock data
-    await deleteDatabase(path);
+  final db = await openDatabase(
+    path,
+    version: 1,
+    onCreate: _createDB,
+  );
 
-    final db = await openDatabase(
-      path,
-      version: 1,
-      onCreate: _createDB,
-    );
+  await _checkAndRecreateTables(db);
 
-    // Validate table existence
-    await _checkAndRecreateTables(db);
-
-    return db;
-  }
+  return db;
+}
 
   Future<void> _checkAndRecreateTables(Database db) async {
     final tables = ['categories', 'transactions', 'saving_goals'];
