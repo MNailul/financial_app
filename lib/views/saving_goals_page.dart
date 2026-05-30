@@ -4,6 +4,7 @@ import '../services/database_helper.dart';
 import '../services/preference_service.dart';
 import '../utils/formatters.dart';
 import 'saving_goal_form_page.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 
 class SavingGoalsPage extends StatefulWidget {
   final VoidCallback onDataChanged;
@@ -306,7 +307,7 @@ class SavingGoalsPageState extends State<SavingGoalsPage> {
                           ),
                         ],
                       ),
-                    ),
+                    ).animate().fadeIn(duration: 500.ms).slideY(begin: 0.1, end: 0),
                     const SizedBox(height: 24),
 
                     // List Header
@@ -535,7 +536,7 @@ class SavingGoalsPageState extends State<SavingGoalsPage> {
                                 ],
                               ),
                             ),
-                          );
+                          ).animate().fadeIn(duration: 400.ms, delay: (50 * index).ms).slideX(begin: 0.1, end: 0);
                         },
                       ),
                     const SizedBox(height: 80),

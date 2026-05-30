@@ -5,6 +5,7 @@ import '../services/database_helper.dart';
 import '../services/preference_service.dart';
 import '../utils/formatters.dart';
 import 'transaction_form_page.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 
 class MonthlyReportPage extends StatefulWidget {
   final VoidCallback onDataChanged;
@@ -213,7 +214,7 @@ class MonthlyReportPageState extends State<MonthlyReportPage> {
                           amount: _totalIncome,
                           color: const Color(0xFF10B981),
                           icon: Icons.arrow_downward,
-                        ),
+                        ).animate().fadeIn(duration: 500.ms).slideY(begin: 0.1, end: 0),
                       ),
                       const SizedBox(width: 12),
                       Expanded(
@@ -222,12 +223,12 @@ class MonthlyReportPageState extends State<MonthlyReportPage> {
                           amount: _totalExpense,
                           color: const Color(0xFFF43F5E),
                           icon: Icons.arrow_upward,
-                        ),
+                        ).animate().fadeIn(duration: 500.ms, delay: 100.ms).slideY(begin: 0.1, end: 0),
                       ),
                     ],
                   ),
                   const SizedBox(height: 12),
-                  _buildSavingsCard(netSavings),
+                  _buildSavingsCard(netSavings).animate().fadeIn(duration: 500.ms, delay: 150.ms).slideY(begin: 0.1, end: 0),
                   const SizedBox(height: 24),
 
                   // Charts Section
@@ -307,7 +308,7 @@ class MonthlyReportPageState extends State<MonthlyReportPage> {
                           )
                         ],
                       ),
-                    ),
+                    ).animate().fadeIn(duration: 500.ms, delay: 200.ms).scale(begin: const Offset(0.95, 0.95)),
                     const SizedBox(height: 20),
 
                     // Category Breakdown List
@@ -394,7 +395,7 @@ class MonthlyReportPageState extends State<MonthlyReportPage> {
                               ),
                             ],
                           ),
-                        );
+                        ).animate().fadeIn(duration: 400.ms, delay: (50 * index).ms).slideX(begin: 0.1, end: 0);
                       },
                     ),
                   ],
@@ -529,7 +530,7 @@ class MonthlyReportPageState extends State<MonthlyReportPage> {
                               ],
                             ),
                           ),
-                        );
+                        ).animate().fadeIn(duration: 400.ms, delay: (50 * index).ms).slideX(begin: 0.1, end: 0);
                       },
                     ),
                   const SizedBox(height: 80),

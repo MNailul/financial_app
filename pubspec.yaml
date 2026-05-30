@@ -41,6 +41,9 @@ dependencies:
   fl_chart: ^1.2.0
   sqflite_common_ffi: ^2.4.0+3
   sqflite_common_ffi_web: ^1.1.1
+  provider: ^6.1.5+1
+  google_fonts: ^8.1.0
+  flutter_animate: ^4.5.2
 
 dev_dependencies:
   flutter_test:

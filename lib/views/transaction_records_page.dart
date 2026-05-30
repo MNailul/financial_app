@@ -4,6 +4,7 @@ import '../services/database_helper.dart';
 import '../services/preference_service.dart';
 import '../utils/formatters.dart';
 import 'transaction_form_page.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 
 class TransactionRecordsPage extends StatefulWidget {
   final VoidCallback onDataChanged;
@@ -174,9 +175,9 @@ class TransactionRecordsPageState extends State<TransactionRecordsPage> {
                   _buildFilterChips(),
                   const SizedBox(height: 16),
                   if (_filteredTransactions.isEmpty)
-                    _buildEmptyState()
+                    _buildEmptyState().animate().fadeIn(duration: 400.ms)
                   else
-                    ..._filteredTransactions.map(_buildTransactionCard),
+                    ..._filteredTransactions.asMap().entries.map((entry) => _buildTransactionCard(entry.value).animate().fadeIn(duration: 400.ms, delay: (50 * entry.key).ms).slideX(begin: 0.1, end: 0)),
                   const SizedBox(height: 80),
                 ],
               ),
@@ -236,7 +237,7 @@ class TransactionRecordsPageState extends State<TransactionRecordsPage> {
           ),
         ],
       ),
-    );
+    ).animate().fadeIn(duration: 500.ms).slideY(begin: 0.1, end: 0);
   }
 
   Widget _buildSummaryItem({

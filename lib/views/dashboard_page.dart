@@ -6,6 +6,7 @@ import '../services/database_helper.dart';
 import '../services/preference_service.dart';
 import '../utils/formatters.dart';
 import 'transaction_form_page.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 
 class DashboardPage extends StatefulWidget {
   final VoidCallback onDataChanged;
@@ -340,7 +341,7 @@ class DashboardPageState extends State<DashboardPage> {
                     ),
                   ],
                 ),
-              ),
+              ).animate().fadeIn(duration: 500.ms).slideY(begin: 0.1, end: 0),
               const SizedBox(height: 24),
 
               // Monthly Budget Card
@@ -421,7 +422,7 @@ class DashboardPageState extends State<DashboardPage> {
                     ]
                   ],
                 ),
-              ),
+              ).animate().fadeIn(duration: 500.ms, delay: 100.ms).slideY(begin: 0.1, end: 0),
               const SizedBox(height: 24),
 
               // Weekly Graph Section
@@ -520,7 +521,7 @@ class DashboardPageState extends State<DashboardPage> {
                     }),
                   ),
                 ),
-              ),
+              ).animate().fadeIn(duration: 500.ms, delay: 200.ms).slideY(begin: 0.1, end: 0),
               const SizedBox(height: 24),
 
               // Dismissible Financial Tips Banner
@@ -688,7 +689,7 @@ class DashboardPageState extends State<DashboardPage> {
                           ],
                         ),
                       ),
-                    );
+                    ).animate().fadeIn(duration: 400.ms, delay: (50 * index).ms).slideX(begin: 0.1, end: 0);
                   },
                 ),
               const SizedBox(height: 80), // extra padding for bottom bar
