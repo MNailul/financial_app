@@ -5,6 +5,8 @@ import 'package:sqflite/sqflite.dart';
 import '../models/transaction_category.dart';
 import '../models/transaction.dart';
 import '../models/saving_goal.dart';
+import '../models/reminder.dart';
+import '../models/monthly_evaluation.dart';
 
 class DatabaseHelper {
   static final DatabaseHelper instance = DatabaseHelper._init();
@@ -34,7 +36,7 @@ class DatabaseHelper {
 }
 
   Future<void> _checkAndRecreateTables(Database db) async {
-    final tables = ['categories', 'transactions', 'saving_goals'];
+    final tables = ['categories', 'transactions', 'saving_goals', 'reminders', 'monthly_evaluations'];
     bool needsRecreate = false;
     for (var table in tables) {
       try {
@@ -57,6 +59,8 @@ class DatabaseHelper {
       await db.execute("DROP TABLE IF EXISTS transactions");
       await db.execute("DROP TABLE IF EXISTS categories");
       await db.execute("DROP TABLE IF EXISTS saving_goals");
+      await db.execute("DROP TABLE IF EXISTS reminders");
+      await db.execute("DROP TABLE IF EXISTS monthly_evaluations");
       await _createDB(db, 1);
     }
   }
@@ -64,7 +68,7 @@ class DatabaseHelper {
   Future<void> _createDB(Database db, int version) async {
     // 1. Categories Table
     await db.execute('''
-      CREATE TABLE categories (
+      CREATE TABLE IF NOT EXISTS categories (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         name TEXT NOT NULL,
         icon_code INTEGER NOT NULL,
@@ -75,7 +79,7 @@ class DatabaseHelper {
 
     // 2. Transactions Table
     await db.execute('''
-      CREATE TABLE transactions (
+      CREATE TABLE IF NOT EXISTS transactions (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         title TEXT NOT NULL,
         amount REAL NOT NULL,
@@ -92,7 +96,7 @@ class DatabaseHelper {
 
     // 3. Saving Goals Table
     await db.execute('''
-      CREATE TABLE saving_goals (
+      CREATE TABLE IF NOT EXISTS saving_goals (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         title TEXT NOT NULL,
         target_amount REAL NOT NULL,
@@ -101,6 +105,24 @@ class DatabaseHelper {
         category TEXT NOT NULL,
         color_value INTEGER NOT NULL,
         status TEXT NOT NULL
+      )
+    ''');
+
+    // 4. Reminders Table
+    await db.execute('''
+      CREATE TABLE IF NOT EXISTS reminders (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        title TEXT NOT NULL,
+        is_done INTEGER NOT NULL
+      )
+    ''');
+
+    // 5. Monthly Evaluations Table
+    await db.execute('''
+      CREATE TABLE IF NOT EXISTS monthly_evaluations (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        month_year TEXT NOT NULL UNIQUE,
+        note TEXT NOT NULL
       )
     ''');
 
@@ -391,9 +413,54 @@ class DatabaseHelper {
   }
 
   // --- SAVING GOALS CRUD ---
+  Future<TransactionCategory> getOrCreateSavingsCategory() async {
+    final db = await instance.database;
+    final List<Map<String, dynamic>> maps = await db.query(
+      'categories',
+      where: 'name = ? AND type = ?',
+      whereArgs: ['Tabungan', 'expense'],
+    );
+    if (maps.isNotEmpty) {
+      return TransactionCategory.fromMap(maps.first);
+    } else {
+      final category = TransactionCategory(
+        name: 'Tabungan',
+        iconCode: Icons.savings.codePoint,
+        colorValue: Colors.teal.value,
+        type: 'expense',
+      );
+      final id = await db.insert('categories', category.toMap());
+      return TransactionCategory(
+        id: id,
+        name: category.name,
+        iconCode: category.iconCode,
+        colorValue: category.colorValue,
+        type: category.type,
+      );
+    }
+  }
+
   Future<int> insertSavingGoal(SavingGoal goal) async {
     final db = await instance.database;
-    return await db.insert('saving_goals', goal.toMap());
+    final id = await db.insert('saving_goals', goal.toMap());
+    
+    if (goal.currentAmount > 0) {
+      final cat = await getOrCreateSavingsCategory();
+      final transaction = TransactionModel(
+        title: 'Menabung Awal: ${goal.title}',
+        amount: goal.currentAmount,
+        type: 'expense',
+        categoryId: cat.id!,
+        categoryName: cat.name,
+        categoryIconCode: cat.iconCode,
+        categoryColorValue: cat.colorValue,
+        date: DateTime.now(),
+        notes: 'Alokasi awal ke target tabungan baru',
+      );
+      await db.insert('transactions', transaction.toMap());
+    }
+    
+    return id;
   }
 
   Future<List<SavingGoal>> getAllSavingGoals() async {
@@ -404,6 +471,41 @@ class DatabaseHelper {
 
   Future<int> updateSavingGoal(SavingGoal goal) async {
     final db = await instance.database;
+    final List<Map<String, dynamic>> oldMaps = await db.query('saving_goals', where: 'id = ?', whereArgs: [goal.id]);
+    if (oldMaps.isNotEmpty) {
+      final oldGoal = SavingGoal.fromMap(oldMaps.first);
+      final difference = goal.currentAmount - oldGoal.currentAmount;
+      if (difference != 0) {
+        final cat = await getOrCreateSavingsCategory();
+        if (difference > 0) {
+          final transaction = TransactionModel(
+            title: 'Penyesuaian Tabungan: ${goal.title}',
+            amount: difference,
+            type: 'expense',
+            categoryId: cat.id!,
+            categoryName: cat.name,
+            categoryIconCode: cat.iconCode,
+            categoryColorValue: cat.colorValue,
+            date: DateTime.now(),
+            notes: 'Penambahan alokasi dana tabungan',
+          );
+          await db.insert('transactions', transaction.toMap());
+        } else {
+          final transaction = TransactionModel(
+            title: 'Penarikan Tabungan: ${goal.title}',
+            amount: -difference,
+            type: 'income',
+            categoryId: cat.id!,
+            categoryName: cat.name,
+            categoryIconCode: cat.iconCode,
+            categoryColorValue: cat.colorValue,
+            date: DateTime.now(),
+            notes: 'Penarikan dana kembali ke saldo utama',
+          );
+          await db.insert('transactions', transaction.toMap());
+        }
+      }
+    }
     return await db.update(
       'saving_goals',
       goal.toMap(),
@@ -414,6 +516,25 @@ class DatabaseHelper {
 
   Future<int> deleteSavingGoal(int id) async {
     final db = await instance.database;
+    final List<Map<String, dynamic>> maps = await db.query('saving_goals', where: 'id = ?', whereArgs: [id]);
+    if (maps.isNotEmpty) {
+      final goal = SavingGoal.fromMap(maps.first);
+      if (goal.status == 'active' && goal.currentAmount > 0) {
+        final cat = await getOrCreateSavingsCategory();
+        final transaction = TransactionModel(
+          title: 'Pencairan: ${goal.title}',
+          amount: goal.currentAmount,
+          type: 'income',
+          categoryId: cat.id!,
+          categoryName: cat.name,
+          categoryIconCode: cat.iconCode,
+          categoryColorValue: cat.colorValue,
+          date: DateTime.now(),
+          notes: 'Pengembalian dana dari target tabungan yang dihapus/dibatalkan',
+        );
+        await db.insert('transactions', transaction.toMap());
+      }
+    }
     return await db.delete('saving_goals', where: 'id = ?', whereArgs: [id]);
   }
 
@@ -434,6 +555,85 @@ class DatabaseHelper {
         where: 'id = ?',
         whereArgs: [id],
       );
+
+      final cat = await getOrCreateSavingsCategory();
+      final transaction = TransactionModel(
+        title: 'Menabung: ${goal.title}',
+        amount: amount,
+        type: 'expense',
+        categoryId: cat.id!,
+        categoryName: cat.name,
+        categoryIconCode: cat.iconCode,
+        categoryColorValue: cat.colorValue,
+        date: DateTime.now(),
+        notes: 'Alokasi dana ke target tabungan',
+      );
+      await db.insert('transactions', transaction.toMap());
     }
+  }
+
+  // --- REMINDERS CRUD ---
+  Future<int> insertReminder(Reminder reminder) async {
+    final db = await instance.database;
+    return await db.insert('reminders', reminder.toMap());
+  }
+
+  Future<List<Reminder>> getAllReminders() async {
+    final db = await instance.database;
+    final List<Map<String, dynamic>> maps = await db.query('reminders', orderBy: 'id DESC');
+    return maps.map((m) => Reminder.fromMap(m)).toList();
+  }
+
+  Future<int> updateReminder(Reminder reminder) async {
+    final db = await instance.database;
+    return await db.update(
+      'reminders',
+      reminder.toMap(),
+      where: 'id = ?',
+      whereArgs: [reminder.id],
+    );
+  }
+
+  Future<int> deleteReminder(int id) async {
+    final db = await instance.database;
+    return await db.delete('reminders', where: 'id = ?', whereArgs: [id]);
+  }
+
+  // --- MONTHLY EVALUATIONS CRUD ---
+  Future<int> insertEvaluation(MonthlyEvaluation evaluation) async {
+    final db = await instance.database;
+    return await db.insert(
+      'monthly_evaluations', 
+      evaluation.toMap(),
+      conflictAlgorithm: ConflictAlgorithm.replace,
+    );
+  }
+
+  Future<MonthlyEvaluation?> getEvaluationByMonth(String monthYear) async {
+    final db = await instance.database;
+    final maps = await db.query(
+      'monthly_evaluations',
+      where: 'month_year = ?',
+      whereArgs: [monthYear],
+    );
+    if (maps.isNotEmpty) {
+      return MonthlyEvaluation.fromMap(maps.first);
+    }
+    return null;
+  }
+
+  Future<int> updateEvaluation(MonthlyEvaluation evaluation) async {
+    final db = await instance.database;
+    return await db.update(
+      'monthly_evaluations',
+      evaluation.toMap(),
+      where: 'id = ?',
+      whereArgs: [evaluation.id],
+    );
+  }
+
+  Future<int> deleteEvaluation(int id) async {
+    final db = await instance.database;
+    return await db.delete('monthly_evaluations', where: 'id = ?', whereArgs: [id]);
   }
 }

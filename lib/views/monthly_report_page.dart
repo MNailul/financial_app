@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
 import '../models/transaction.dart';
+import '../models/monthly_evaluation.dart';
 import '../services/database_helper.dart';
 import '../services/preference_service.dart';
 import '../utils/formatters.dart';
@@ -21,6 +22,7 @@ class MonthlyReportPageState extends State<MonthlyReportPage> {
 
   DateTime _selectedDate = DateTime.now();
   List<TransactionModel> _monthlyTransactions = [];
+  MonthlyEvaluation? _evaluationNote;
   double _totalIncome = 0.0;
   double _totalExpense = 0.0;
   Map<String, double> _categoryExpenses = {};
@@ -64,6 +66,9 @@ class MonthlyReportPageState extends State<MonthlyReportPage> {
         _selectedDate.month,
       );
 
+      final String monthYearKey = '${_selectedDate.year}-${_selectedDate.month.toString().padLeft(2, '0')}';
+      final evaluation = await _dbHelper.getEvaluationByMonth(monthYearKey);
+
       double income = 0.0;
       double expense = 0.0;
       final Map<String, double> catExpenses = {};
@@ -84,6 +89,7 @@ class MonthlyReportPageState extends State<MonthlyReportPage> {
       if (mounted) {
         setState(() {
           _monthlyTransactions = transactions;
+          _evaluationNote = evaluation;
           _totalIncome = income;
           _totalExpense = expense;
           _categoryExpenses = catExpenses;
@@ -119,6 +125,61 @@ class MonthlyReportPageState extends State<MonthlyReportPage> {
         const SnackBar(content: Text('Transaksi berhasil dihapus')),
       );
     }
+  }
+
+  // --- Evaluation Notes Methods ---
+  Future<void> _saveEvaluation(String noteText) async {
+    final String monthYearKey = '${_selectedDate.year}-${_selectedDate.month.toString().padLeft(2, '0')}';
+    final eval = MonthlyEvaluation(
+      id: _evaluationNote?.id,
+      monthYear: monthYearKey,
+      note: noteText.trim(),
+    );
+    await _dbHelper.insertEvaluation(eval);
+    await _loadMonthlyData(showLoading: false);
+  }
+
+  Future<void> _deleteEvaluation() async {
+    if (_evaluationNote?.id != null) {
+      await _dbHelper.deleteEvaluation(_evaluationNote!.id!);
+      await _loadMonthlyData(showLoading: false);
+    }
+  }
+
+  void _showEvaluationDialog() {
+    final TextEditingController controller = TextEditingController(text: _evaluationNote?.note ?? '');
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: Colors.white,
+        title: const Text('Evaluasi Bulanan', style: TextStyle(color: Colors.black87)),
+        content: TextField(
+          controller: controller,
+          maxLines: 3,
+          decoration: const InputDecoration(
+            hintText: 'Cth: Pengeluaran makan terlalu besar...',
+          ),
+          autofocus: true,
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text('Batal', style: TextStyle(color: Colors.grey[700])),
+          ),
+          TextButton(
+            onPressed: () {
+              Navigator.pop(context);
+              if (controller.text.trim().isEmpty) {
+                 if (_evaluationNote != null) _deleteEvaluation();
+              } else {
+                 _saveEvaluation(controller.text);
+              }
+            },
+            child: const Text('Simpan', style: TextStyle(color: Color(0xFF118EEA))),
+          ),
+        ],
+      ),
+    );
   }
 
   @override
@@ -533,6 +594,90 @@ class MonthlyReportPageState extends State<MonthlyReportPage> {
                         ).animate().fadeIn(duration: 400.ms, delay: (50 * index).ms).slideX(begin: 0.1, end: 0);
                       },
                     ),
+                  const SizedBox(height: 32),
+
+                  // Evaluation Note Section
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const Text(
+                        'Catatan Evaluasi',
+                        style: TextStyle(color: Colors.black87, fontSize: 16, fontWeight: FontWeight.bold),
+                      ),
+                      TextButton(
+                        onPressed: _showEvaluationDialog,
+                        child: Text(
+                          _evaluationNote == null ? '+ Tulis' : 'Edit',
+                          style: const TextStyle(color: Color(0xFF118EEA)),
+                        ),
+                      )
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  if (_evaluationNote == null)
+                    Container(
+                      padding: const EdgeInsets.symmetric(vertical: 24),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(color: Colors.blue.shade100, style: BorderStyle.solid),
+                      ),
+                      child: Center(
+                        child: Text(
+                          'Belum ada evaluasi untuk bulan ini',
+                          style: TextStyle(color: Colors.grey[500], fontSize: 13),
+                        ),
+                      ),
+                    )
+                  else
+                    Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: Colors.blue.shade50,
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(color: Colors.blue.shade100),
+                      ),
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Icon(Icons.sticky_note_2, color: Color(0xFF118EEA), size: 24),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Text(
+                              _evaluationNote!.note,
+                              style: const TextStyle(color: Colors.black87, fontSize: 14, height: 1.4),
+                            ),
+                          ),
+                          IconButton(
+                            padding: EdgeInsets.zero,
+                            constraints: const BoxConstraints(),
+                            icon: const Icon(Icons.delete_outline, color: Colors.redAccent, size: 20),
+                            onPressed: () {
+                              showDialog(
+                                context: context,
+                                builder: (ctx) => AlertDialog(
+                                  backgroundColor: Colors.white,
+                                  title: const Text('Hapus Evaluasi?'),
+                                  actions: [
+                                    TextButton(
+                                      onPressed: () => Navigator.pop(ctx),
+                                      child: Text('Batal', style: TextStyle(color: Colors.grey[700])),
+                                    ),
+                                    TextButton(
+                                      onPressed: () {
+                                        Navigator.pop(ctx);
+                                        _deleteEvaluation();
+                                      },
+                                      child: const Text('Hapus', style: TextStyle(color: Colors.red)),
+                                    ),
+                                  ],
+                                ),
+                              );
+                            },
+                          )
+                        ],
+                      ),
+                    ).animate().fadeIn(duration: 400.ms),
                   const SizedBox(height: 80),
                 ],
               ),

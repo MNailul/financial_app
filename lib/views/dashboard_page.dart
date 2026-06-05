@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
 import '../models/transaction.dart';
 import '../models/transaction_category.dart';
+import '../models/reminder.dart';
 import '../services/database_helper.dart';
 import '../services/preference_service.dart';
 import '../utils/formatters.dart';
@@ -25,6 +26,7 @@ class DashboardPageState extends State<DashboardPage> {
   double _totalExpense = 0.0;
   double _currentMonthExpense = 0.0;
   List<TransactionModel> _recentTransactions = [];
+  List<Reminder> _reminders = [];
   List<double> _weeklyExpenses = List.filled(7, 0.0); // Mon - Sun
   bool _isLoading = true;
   String? _errorMessage;
@@ -90,6 +92,9 @@ class DashboardPageState extends State<DashboardPage> {
       // Recent 4 transactions
       final recent = allTx.take(4).toList();
 
+      // Load Reminders
+      final allReminders = await _dbHelper.getAllReminders();
+
       // Calculate weekly expenses (last 7 days, Mon to Sun of current week)
       final List<double> weeklyDays = List.filled(7, 0.0);
       // Let's get start of the current week (Monday)
@@ -113,6 +118,7 @@ class DashboardPageState extends State<DashboardPage> {
           _totalBalance = income - expense;
           _currentMonthExpense = curMonthExpense;
           _recentTransactions = recent;
+          _reminders = allReminders;
           _weeklyExpenses = weeklyDays;
           _isLoading = false;
         });
@@ -167,6 +173,55 @@ class DashboardPageState extends State<DashboardPage> {
             widget.onDataChanged();
           },
         ),
+      ),
+    );
+  }
+
+  // --- Reminders Methods ---
+  Future<void> _addReminder(String title) async {
+    if (title.trim().isEmpty) return;
+    await _dbHelper.insertReminder(Reminder(title: title.trim()));
+    await _loadDashboardData(showLoading: false);
+  }
+
+  Future<void> _toggleReminder(Reminder reminder) async {
+    final updated = Reminder(id: reminder.id, title: reminder.title, isDone: !reminder.isDone);
+    await _dbHelper.updateReminder(updated);
+    await _loadDashboardData(showLoading: false);
+  }
+
+  Future<void> _deleteReminder(int id) async {
+    await _dbHelper.deleteReminder(id);
+    await _loadDashboardData(showLoading: false);
+  }
+  
+  void _showAddReminderDialog() {
+    final TextEditingController controller = TextEditingController();
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: Colors.white,
+        title: const Text('Tambah Pengingat', style: TextStyle(color: Colors.black87)),
+        content: TextField(
+          controller: controller,
+          decoration: const InputDecoration(
+            hintText: 'Cth: Bayar listrik bulanan',
+          ),
+          autofocus: true,
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text('Batal', style: TextStyle(color: Colors.grey[700])),
+          ),
+          TextButton(
+            onPressed: () {
+              Navigator.pop(context);
+              _addReminder(controller.text);
+            },
+            child: const Text('Simpan', style: TextStyle(color: Color(0xFF118EEA))),
+          ),
+        ],
       ),
     );
   }
@@ -563,6 +618,79 @@ class DashboardPageState extends State<DashboardPage> {
                 ),
                 const SizedBox(height: 24),
               ],
+
+              // Reminders Section
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Text(
+                    'Pengingat Keuangan',
+                    style: TextStyle(color: Colors.black87, fontSize: 16, fontWeight: FontWeight.bold),
+                  ),
+                  TextButton(
+                    onPressed: _showAddReminderDialog,
+                    child: const Text('+ Tambah', style: TextStyle(color: Color(0xFF118EEA))),
+                  )
+                ],
+              ),
+              const SizedBox(height: 8),
+              if (_reminders.isEmpty)
+                Container(
+                  padding: const EdgeInsets.symmetric(vertical: 24),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  child: Center(
+                    child: Text(
+                      'Belum ada pengingat',
+                      style: TextStyle(color: Colors.grey[600], fontSize: 13),
+                    ),
+                  ),
+                )
+              else
+                Container(
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(16),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.02),
+                        blurRadius: 5,
+                        offset: const Offset(0, 2),
+                      )
+                    ]
+                  ),
+                  child: ListView.separated(
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    itemCount: _reminders.length,
+                    separatorBuilder: (context, index) => const Divider(height: 1, color: Colors.black12),
+                    itemBuilder: (context, index) {
+                      final rem = _reminders[index];
+                      return ListTile(
+                        leading: Checkbox(
+                          value: rem.isDone,
+                          onChanged: (val) => _toggleReminder(rem),
+                          activeColor: const Color(0xFF118EEA),
+                        ),
+                        title: Text(
+                          rem.title,
+                          style: TextStyle(
+                            color: rem.isDone ? Colors.grey[500] : Colors.black87,
+                            decoration: rem.isDone ? TextDecoration.lineThrough : null,
+                            fontSize: 14,
+                          ),
+                        ),
+                        trailing: IconButton(
+                          icon: const Icon(Icons.delete_outline, color: Colors.redAccent, size: 20),
+                          onPressed: () => _deleteReminder(rem.id!),
+                        ),
+                      );
+                    },
+                  ),
+                ),
+              const SizedBox(height: 24),
 
               // Recent Transactions List
               Row(
