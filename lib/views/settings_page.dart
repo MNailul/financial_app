@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../services/preference_service.dart';
 import '../utils/formatters.dart';
 import 'category_management_page.dart';
+import 'faq_page.dart';
 
 class SettingsPage extends StatefulWidget {
   final VoidCallback onSettingsChanged;
@@ -19,7 +20,7 @@ class _SettingsPageState extends State<SettingsPage> {
   late double _budgetLimit;
   late bool _isPinSet;
   late String _savedPin;
-  late bool _syncToCloud;
+  late bool _showReminders;
   late bool _tipsSeen;
   late String _defaultView;
 
@@ -39,7 +40,7 @@ class _SettingsPageState extends State<SettingsPage> {
       _budgetLimit = _prefService.monthlyBudgetLimit;
       _isPinSet = _prefService.isPinSet;
       _savedPin = _prefService.savedPin;
-      _syncToCloud = _prefService.syncToCloud;
+      _showReminders = _prefService.showReminders;
       _tipsSeen = _prefService.financialTipsSeen;
       _defaultView = _prefService.defaultAccountView;
     });
@@ -63,8 +64,8 @@ class _SettingsPageState extends State<SettingsPage> {
     widget.onSettingsChanged();
   }
 
-  Future<void> _updateSyncToCloud(bool value) async {
-    await _prefService.setSyncToCloud(value);
+  Future<void> _updateShowReminders(bool value) async {
+    await _prefService.setShowReminders(value);
     _loadSettings();
     widget.onSettingsChanged();
   }
@@ -156,6 +157,14 @@ class _SettingsPageState extends State<SettingsPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+      appBar: AppBar(
+        scrolledUnderElevation: 0,
+        backgroundColor: Colors.transparent,
+        title: const Text(
+          'Keamanan & Setelan',
+          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20),
+        ),
+      ),
       body: ListView(
         padding: const EdgeInsets.all(16.0),
         children: [
@@ -266,14 +275,14 @@ class _SettingsPageState extends State<SettingsPage> {
             ),
           ),
 
-          // Sync to Cloud Preference
+          // Show Reminders Preference
           _buildSettingTile(
-            title: 'Sinkronisasi Cloud',
-            subtitle: 'Simpan & cadangkan data ke cloud otomatis',
+            title: 'Tampilkan Pengingat',
+            subtitle: 'Tampilkan widget pengingat keuangan di dashboard',
             trailing: Switch(
-              value: _syncToCloud,
-              activeColor: const Color(0xFF118EEA),
-              onChanged: _updateSyncToCloud,
+              value: _showReminders,
+              activeColor: const Color(0xFF2563EB),
+              onChanged: _updateShowReminders,
             ),
           ),
 
@@ -309,6 +318,22 @@ class _SettingsPageState extends State<SettingsPage> {
                 style: const TextStyle(color: Color(0xFF118EEA), fontWeight: FontWeight.bold),
               ),
             ),
+          ),
+
+          const SizedBox(height: 16),
+          _buildSectionHeader('Informasi Lainnya'),
+
+          // FAQ Page
+          _buildSettingTile(
+            title: 'Bantuan & FAQ',
+            subtitle: 'Panduan penggunaan aplikasi',
+            trailing: const Icon(Icons.chevron_right, color: Color(0xFF2563EB)),
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const FaqPage()),
+              );
+            },
           ),
 
           const SizedBox(height: 32),

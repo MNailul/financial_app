@@ -102,27 +102,7 @@ class TransactionRecordsPageState extends State<TransactionRecordsPage> {
   }
 
   Future<void> _deleteTransaction(TransactionModel transaction) async {
-    final confirm = await showDialog<bool>(
-      context: context,
-      builder: (dialogCtx) => AlertDialog(
-        backgroundColor: Colors.white,
-        title: const Text('Hapus Transaksi'),
-        content: Text('Yakin ingin menghapus "${transaction.title}"?'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(dialogCtx, false),
-            child: Text('Batal', style: TextStyle(color: Colors.grey[700])),
-          ),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(backgroundColor: Colors.redAccent),
-            onPressed: () => Navigator.pop(dialogCtx, true),
-            child: const Text('Hapus', style: TextStyle(color: Colors.white)),
-          ),
-        ],
-      ),
-    );
-
-    if (confirm != true || transaction.id == null) return;
+    if (transaction.id == null) return;
 
     await _dbHelper.deleteTransaction(transaction.id!);
     await _loadTransactions(showLoading: false);
@@ -153,11 +133,14 @@ class TransactionRecordsPageState extends State<TransactionRecordsPage> {
 
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-      floatingActionButton: FloatingActionButton(
-        backgroundColor: primaryBlue,
-        foregroundColor: Colors.white,
-        onPressed: () => _openTransactionForm(),
-        child: const Icon(Icons.add),
+      floatingActionButton: Padding(
+        padding: const EdgeInsets.only(bottom: 80.0),
+        child: FloatingActionButton(
+          backgroundColor: const Color(0xFF2563EB),
+          foregroundColor: Colors.white,
+          onPressed: () => _openTransactionForm(),
+          child: const Icon(Icons.add),
+        ),
       ),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator(color: primaryBlue))
@@ -330,21 +313,58 @@ class TransactionRecordsPageState extends State<TransactionRecordsPage> {
     final typeColor = isIncome ? const Color(0xFF00C853) : const Color(0xFFF43F5E);
     final categoryColor = Color(tx.categoryColorValue);
 
-    return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.03),
-            blurRadius: 8,
-            offset: const Offset(0, 3),
-          ),
-        ],
+    return Dismissible(
+      key: ValueKey(tx.id),
+      direction: DismissDirection.endToStart,
+      background: Container(
+        margin: const EdgeInsets.only(bottom: 12),
+        decoration: BoxDecoration(
+          color: Colors.redAccent,
+          borderRadius: BorderRadius.circular(16),
+        ),
+        alignment: Alignment.centerRight,
+        padding: const EdgeInsets.symmetric(horizontal: 20),
+        child: const Icon(Icons.delete_sweep, color: Colors.white, size: 28),
       ),
-      child: InkWell(
+      confirmDismiss: (direction) async {
+        return await showDialog<bool>(
+          context: context,
+          builder: (dialogCtx) => AlertDialog(
+            backgroundColor: Colors.white,
+            title: const Text('Hapus Transaksi'),
+            content: Text('Yakin ingin menghapus "${tx.title}"?'),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(dialogCtx, false),
+                child: Text('Batal', style: TextStyle(color: Colors.grey[700])),
+              ),
+              ElevatedButton(
+                style: ElevatedButton.styleFrom(backgroundColor: Colors.redAccent),
+                onPressed: () => Navigator.pop(dialogCtx, true),
+                child: const Text('Hapus', style: TextStyle(color: Colors.white)),
+              ),
+            ],
+          ),
+        );
+      },
+      onDismissed: (direction) {
+        _deleteTransaction(tx);
+      },
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 12),
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.03),
+              blurRadius: 8,
+              offset: const Offset(0, 3),
+            ),
+          ],
+        ),
+        child: InkWell(
         borderRadius: BorderRadius.circular(16),
         onTap: () => _openTransactionForm(tx),
         child: Row(
@@ -389,19 +409,18 @@ class TransactionRecordsPageState extends State<TransactionRecordsPage> {
             const SizedBox(width: 8),
             Column(
               crossAxisAlignment: CrossAxisAlignment.end,
+              mainAxisAlignment: MainAxisAlignment.center,
               children: [
+                const SizedBox(height: 10), // Optional: center it visually since the button is gone
                 Text(
                   '${isIncome ? '+' : '-'} ${Formatters.formatCurrency(tx.amount, _currency)}',
                   style: TextStyle(color: typeColor, fontWeight: FontWeight.bold, fontSize: 12),
-                ),
-                IconButton(
-                  icon: const Icon(Icons.delete_outline, color: Colors.redAccent, size: 20),
-                  onPressed: () => _deleteTransaction(tx),
                 ),
               ],
             ),
           ],
         ),
+      ),
       ),
     );
   }

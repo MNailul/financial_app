@@ -96,7 +96,7 @@ class _TransactionFormPageState extends State<TransactionFormPage> {
       firstDate: DateTime.now().subtract(const Duration(days: 365 * 5)),
       lastDate: DateTime.now().add(const Duration(days: 365)),
       builder: (context, child) {
-        const primaryBlue = Color(0xFF118EEA);
+        const primaryBlue = Color(0xFF2563EB);
         return Theme(
           data: Theme.of(context).copyWith(
             colorScheme: const ColorScheme.light(
@@ -181,12 +181,12 @@ class _TransactionFormPageState extends State<TransactionFormPage> {
   @override
   Widget build(BuildContext context) {
     final isEdit = widget.transaction != null;
-    const primaryBlue = Color(0xFF118EEA);
+    const primaryBlue = Color(0xFF2563EB);
 
     return Scaffold(
       backgroundColor: const Color(0xFFF9FAFB),
       appBar: AppBar(
-        backgroundColor: primaryBlue,
+        scrolledUnderElevation: 0,
         title: Text(
           isEdit ? 'Ubah Transaksi' : 'Tambah Transaksi',
           style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 20),
@@ -233,7 +233,7 @@ class _TransactionFormPageState extends State<TransactionFormPage> {
                           decoration: BoxDecoration(
                             color: _type == 'expense' 
                                 ? const Color(0xFFF43F5E) 
-                                : Colors.transparent,
+                                : Colors.grey.shade100,
                             borderRadius: BorderRadius.circular(12),
                           ),
                           child: Center(
@@ -267,7 +267,7 @@ class _TransactionFormPageState extends State<TransactionFormPage> {
                           decoration: BoxDecoration(
                             color: _type == 'income' 
                                 ? const Color(0xFF00C853) 
-                                : Colors.transparent,
+                                : Colors.grey.shade100,
                             borderRadius: BorderRadius.circular(12),
                           ),
                           child: Center(
@@ -306,7 +306,7 @@ class _TransactionFormPageState extends State<TransactionFormPage> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'NOMINAL ${_type.toUpperCase()}',
+                      'NOMINAL ${_type == 'expense' ? 'PENGELUARAN' : 'PEMASUKAN'}',
                       style: TextStyle(
                         color: Colors.grey[500],
                         fontSize: 11,
@@ -572,27 +572,39 @@ class _TransactionFormPageState extends State<TransactionFormPage> {
                   ],
                 ),
               ),
-              const SizedBox(height: 28),
-
-              // 5. Submit Button
-              ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: primaryBlue,
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  elevation: 2,
-                  shadowColor: primaryBlue.withOpacity(0.3),
-                ),
-                onPressed: _saveForm,
-                child: Text(
-                  isEdit ? 'Perbarui Transaksi' : 'Simpan Transaksi',
-                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-                ),
-              ),
+              const SizedBox(height: 80), // extra padding for scrolling past the button
             ],
+          ),
+        ),
+      ),
+      bottomNavigationBar: SafeArea(
+        child: Container(
+          padding: const EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.05),
+                blurRadius: 10,
+                offset: const Offset(0, -4),
+              )
+            ]
+          ),
+          child: ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: primaryBlue,
+              foregroundColor: Colors.white,
+              padding: const EdgeInsets.symmetric(vertical: 16),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+              elevation: 0,
+            ),
+            onPressed: _saveForm,
+            child: Text(
+              isEdit ? 'Perbarui Transaksi' : 'Simpan Transaksi',
+              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+            ),
           ),
         ),
       ),

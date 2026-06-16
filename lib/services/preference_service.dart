@@ -50,10 +50,10 @@ class PreferenceService {
     await prefs.setString('saved_pin', value);
   }
 
-  // 6. Sync To Cloud (Status auto-sync)
-  bool get syncToCloud => prefs.getBool('sync_to_cloud') ?? false;
-  Future<void> setSyncToCloud(bool value) async {
-    await prefs.setBool('sync_to_cloud', value);
+  // 6. Show Reminders (Tampilkan Pengingat di Dashboard)
+  bool get showReminders => prefs.getBool('show_reminders') ?? true;
+  Future<void> setShowReminders(bool value) async {
+    await prefs.setBool('show_reminders', value);
   }
 
   // 7. Financial Tips Seen (Agar popup tips tidak muncul terus-menerus)

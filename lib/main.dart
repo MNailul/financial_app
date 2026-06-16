@@ -5,6 +5,7 @@ import 'package:sqflite/sqflite.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 import 'package:sqflite_common_ffi_web/sqflite_ffi_web.dart';
 import 'package:intl/date_symbol_data_local.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'services/preference_service.dart';
 import 'views/main_navigation_hub.dart';
 
@@ -40,24 +41,25 @@ class MyApp extends StatelessWidget {
       theme: ThemeData(
         useMaterial3: true,
         brightness: Brightness.light,
+        textTheme: GoogleFonts.outfitTextTheme(Theme.of(context).textTheme),
         colorScheme: ColorScheme.fromSeed(
-          seedColor: const Color(0xFF118EEA), // DANA/BCA inspired blue
-          primary: const Color(0xFF118EEA),
-          secondary: const Color(0xFF00C853), // GoPay inspired green for success/accents
+          seedColor: const Color(0xFF2563EB), // Sleek indigo-blue
+          primary: const Color(0xFF2563EB),
+          secondary: const Color(0xFF10B981), // Emerald green
           brightness: Brightness.light,
         ),
-        scaffoldBackgroundColor: const Color(0xFFF9FAFB), // Very light gray
+        scaffoldBackgroundColor: const Color(0xFFF3F4F6), // Slightly deeper cool gray
         appBarTheme: const AppBarTheme(
-          backgroundColor: Color(0xFF118EEA),
-          foregroundColor: Colors.white,
+          backgroundColor: Colors.transparent, // transparent for a modern look
+          foregroundColor: Color(0xFF1F2937),
           centerTitle: false,
           elevation: 0,
         ),
         cardTheme: CardThemeData(
           color: Colors.white,
-          elevation: 2,
-          shadowColor: Colors.black.withOpacity(0.05),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          elevation: 4,
+          shadowColor: const Color(0xFF9CA3AF).withOpacity(0.15),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
         ),
       ),
       home: const MainNavigationHub(),

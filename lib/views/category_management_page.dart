@@ -453,9 +453,9 @@ class _CategoryManagementPageState extends State<CategoryManagementPage> with Si
         ),
         bottom: TabBar(
           controller: _tabController,
-          labelColor: Colors.white,
-          unselectedLabelColor: Colors.white70,
-          indicatorColor: Colors.white,
+          labelColor: const Color(0xFF2563EB),
+          unselectedLabelColor: Colors.grey.shade500,
+          indicatorColor: const Color(0xFF2563EB),
           indicatorSize: TabBarIndicatorSize.tab,
           indicatorWeight: 3,
           labelStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
@@ -523,7 +523,7 @@ class _CategoryManagementPageState extends State<CategoryManagementPage> with Si
         ],
       ),
       floatingActionButton: FloatingActionButton.extended(
-        backgroundColor: const Color(0xFF118EEA),
+        backgroundColor: const Color(0xFF2563EB),
         foregroundColor: Colors.white,
         onPressed: () => _showCategoryFormSheet(),
         icon: const Icon(Icons.add),

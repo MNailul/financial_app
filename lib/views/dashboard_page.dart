@@ -36,6 +36,7 @@ class DashboardPageState extends State<DashboardPage> {
   late bool _hideBalance;
   late double _budgetLimit;
   late bool _tipsSeen;
+  late bool _showReminders;
 
   @override
   void initState() {
@@ -49,6 +50,7 @@ class DashboardPageState extends State<DashboardPage> {
     _hideBalance = _prefService.hideBalance;
     _budgetLimit = _prefService.monthlyBudgetLimit;
     _tipsSeen = _prefService.financialTipsSeen;
+    _showReminders = _prefService.showReminders;
   }
 
   Future<void> reload() async {
@@ -292,111 +294,126 @@ class DashboardPageState extends State<DashboardPage> {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               const SizedBox(height: 12),
-              // Balance Card with Custom Gradient
+              // Balance Card with CustomPaint Background
               Container(
-                padding: const EdgeInsets.all(24.0),
                 decoration: BoxDecoration(
                   gradient: const LinearGradient(
-                    colors: [Color(0xFF118EEA), Color(0xFF0056A6)],
+                    colors: [Color(0xFF2563EB), Color(0xFF1D4ED8)], // Indigo-blue gradient
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
                   ),
-                  borderRadius: BorderRadius.circular(24),
+                  borderRadius: BorderRadius.circular(32),
                   boxShadow: [
                     BoxShadow(
-                      color: const Color(0xFF118EEA).withOpacity(0.3),
-                      blurRadius: 16,
-                      offset: const Offset(0, 8),
+                      color: const Color(0xFF2563EB).withOpacity(0.4),
+                      blurRadius: 24,
+                      offset: const Offset(0, 12),
                     )
                   ],
                 ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        const Text(
-                          'Total Saldo Anda',
-                          style: TextStyle(color: Colors.white70, fontSize: 14, fontWeight: FontWeight.w500),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(32),
+                  child: Stack(
+                    children: [
+                      // Custom Abstract Drawing (Tubes Requirement: Custom Widget/Drawing)
+                      Positioned.fill(
+                        child: CustomPaint(
+                          painter: _BalanceCardBackgroundPainter(),
                         ),
-                        IconButton(
-                          icon: Icon(
-                            _hideBalance ? Icons.visibility_off : Icons.visibility,
-                            color: Colors.white,
-                            size: 20,
-                          ),
-                          onPressed: _toggleBalanceVisibility,
-                        )
-                      ],
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      _hideBalance ? '••••••' : Formatters.formatCurrency(_totalBalance, _currency),
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 28,
-                        fontWeight: FontWeight.bold,
-                        letterSpacing: 0.5,
                       ),
-                    ),
-                    const SizedBox(height: 24),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        // Income Stats
-                        Row(
+                      Padding(
+                        padding: const EdgeInsets.all(28.0),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Container(
-                              padding: const EdgeInsets.all(8),
-                              decoration: BoxDecoration(
-                                color: Colors.white.withOpacity(0.15),
-                                shape: BoxShape.circle,
-                              ),
-                              child: const Icon(Icons.arrow_downward, color: Color(0xFF10B981), size: 18),
-                            ),
-                            const SizedBox(width: 10),
-                            Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
-                                const Text('Pemasukan', style: TextStyle(color: Colors.white60, fontSize: 11)),
-                                Text(
-                                  _hideBalance ? '••••••' : Formatters.formatCurrency(_totalIncome, _currency),
-                                  style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14),
+                                const Text(
+                                  'Total Saldo Anda',
+                                  style: TextStyle(color: Colors.white70, fontSize: 14, fontWeight: FontWeight.w500),
+                                ),
+                                IconButton(
+                                  icon: Icon(
+                                    _hideBalance ? Icons.visibility_off : Icons.visibility,
+                                    color: Colors.white,
+                                    size: 20,
+                                  ),
+                                  onPressed: _toggleBalanceVisibility,
+                                )
+                              ],
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              _hideBalance ? '••••••' : Formatters.formatCurrency(_totalBalance, _currency),
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 32,
+                                fontWeight: FontWeight.w800,
+                                letterSpacing: 0.5,
+                              ),
+                            ),
+                            const SizedBox(height: 32),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                // Income Stats
+                                Row(
+                                  children: [
+                                    Container(
+                                      padding: const EdgeInsets.all(10),
+                                      decoration: BoxDecoration(
+                                        color: Colors.white.withOpacity(0.2),
+                                        borderRadius: BorderRadius.circular(12),
+                                      ),
+                                      child: const Icon(Icons.arrow_downward, color: Color(0xFF34D399), size: 20),
+                                    ),
+                                    const SizedBox(width: 12),
+                                    Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        const Text('Pemasukan', style: TextStyle(color: Colors.white70, fontSize: 12)),
+                                        Text(
+                                          _hideBalance ? '••••••' : Formatters.formatCurrency(_totalIncome, _currency),
+                                          style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 15),
+                                        ),
+                                      ],
+                                    ),
+                                  ],
+                                ),
+                                // Expense Stats
+                                Row(
+                                  children: [
+                                    Container(
+                                      padding: const EdgeInsets.all(10),
+                                      decoration: BoxDecoration(
+                                        color: Colors.white.withOpacity(0.2),
+                                        borderRadius: BorderRadius.circular(12),
+                                      ),
+                                      child: const Icon(Icons.arrow_upward, color: Color(0xFFF87171), size: 20),
+                                    ),
+                                    const SizedBox(width: 12),
+                                    Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        const Text('Pengeluaran', style: TextStyle(color: Colors.white70, fontSize: 12)),
+                                        Text(
+                                          _hideBalance ? '••••••' : Formatters.formatCurrency(_totalExpense, _currency),
+                                          style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 15),
+                                        ),
+                                      ],
+                                    ),
+                                  ],
                                 ),
                               ],
                             ),
                           ],
                         ),
-                        // Expense Stats
-                        Row(
-                          children: [
-                            Container(
-                              padding: const EdgeInsets.all(8),
-                              decoration: BoxDecoration(
-                                color: Colors.white.withOpacity(0.15),
-                                shape: BoxShape.circle,
-                              ),
-                              child: const Icon(Icons.arrow_upward, color: Color(0xFFF43F5E), size: 18),
-                            ),
-                            const SizedBox(width: 10),
-                            Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                const Text('Pengeluaran', style: TextStyle(color: Colors.white60, fontSize: 11)),
-                                Text(
-                                  _hideBalance ? '••••••' : Formatters.formatCurrency(_totalExpense, _currency),
-                                  style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14),
-                                ),
-                              ],
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
-                  ],
+                      ),
+                    ],
+                  ),
                 ),
-              ).animate().fadeIn(duration: 500.ms).slideY(begin: 0.1, end: 0),
+              ).animate().fadeIn(duration: 600.ms).slideY(begin: 0.1, end: 0),
               const SizedBox(height: 24),
 
               // Monthly Budget Card
@@ -620,77 +637,79 @@ class DashboardPageState extends State<DashboardPage> {
               ],
 
               // Reminders Section
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  const Text(
-                    'Pengingat Keuangan',
-                    style: TextStyle(color: Colors.black87, fontSize: 16, fontWeight: FontWeight.bold),
-                  ),
-                  TextButton(
-                    onPressed: _showAddReminderDialog,
-                    child: const Text('+ Tambah', style: TextStyle(color: Color(0xFF118EEA))),
+              if (_showReminders) ...[
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Text(
+                      'Pengingat Keuangan',
+                      style: TextStyle(color: Colors.black87, fontSize: 16, fontWeight: FontWeight.bold),
+                    ),
+                    TextButton(
+                      onPressed: _showAddReminderDialog,
+                      child: const Text('+ Tambah', style: TextStyle(color: Color(0xFF118EEA))),
+                    )
+                  ],
+                ),
+                const SizedBox(height: 8),
+                if (_reminders.isEmpty)
+                  Container(
+                    padding: const EdgeInsets.symmetric(vertical: 24),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    child: Center(
+                      child: Text(
+                        'Belum ada pengingat',
+                        style: TextStyle(color: Colors.grey[600], fontSize: 13),
+                      ),
+                    ),
                   )
-                ],
-              ),
-              const SizedBox(height: 8),
-              if (_reminders.isEmpty)
-                Container(
-                  padding: const EdgeInsets.symmetric(vertical: 24),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(16),
-                  ),
-                  child: Center(
-                    child: Text(
-                      'Belum ada pengingat',
-                      style: TextStyle(color: Colors.grey[600], fontSize: 13),
+                else
+                  Container(
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(16),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.02),
+                          blurRadius: 5,
+                          offset: const Offset(0, 2),
+                        )
+                      ]
+                    ),
+                    child: ListView.separated(
+                      shrinkWrap: true,
+                      physics: const NeverScrollableScrollPhysics(),
+                      itemCount: _reminders.length,
+                      separatorBuilder: (context, index) => const Divider(height: 1, color: Colors.black12),
+                      itemBuilder: (context, index) {
+                        final rem = _reminders[index];
+                        return ListTile(
+                          leading: Checkbox(
+                            value: rem.isDone,
+                            onChanged: (val) => _toggleReminder(rem),
+                            activeColor: const Color(0xFF118EEA),
+                          ),
+                          title: Text(
+                            rem.title,
+                            style: TextStyle(
+                              color: rem.isDone ? Colors.grey[500] : Colors.black87,
+                              decoration: rem.isDone ? TextDecoration.lineThrough : null,
+                              fontSize: 14,
+                            ),
+                          ),
+                          trailing: IconButton(
+                            icon: const Icon(Icons.delete_outline, color: Colors.redAccent, size: 20),
+                            onPressed: () => _deleteReminder(rem.id!),
+                          ),
+                        );
+                      },
                     ),
                   ),
-                )
-              else
-                Container(
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(16),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withOpacity(0.02),
-                        blurRadius: 5,
-                        offset: const Offset(0, 2),
-                      )
-                    ]
-                  ),
-                  child: ListView.separated(
-                    shrinkWrap: true,
-                    physics: const NeverScrollableScrollPhysics(),
-                    itemCount: _reminders.length,
-                    separatorBuilder: (context, index) => const Divider(height: 1, color: Colors.black12),
-                    itemBuilder: (context, index) {
-                      final rem = _reminders[index];
-                      return ListTile(
-                        leading: Checkbox(
-                          value: rem.isDone,
-                          onChanged: (val) => _toggleReminder(rem),
-                          activeColor: const Color(0xFF118EEA),
-                        ),
-                        title: Text(
-                          rem.title,
-                          style: TextStyle(
-                            color: rem.isDone ? Colors.grey[500] : Colors.black87,
-                            decoration: rem.isDone ? TextDecoration.lineThrough : null,
-                            fontSize: 14,
-                          ),
-                        ),
-                        trailing: IconButton(
-                          icon: const Icon(Icons.delete_outline, color: Colors.redAccent, size: 20),
-                          onPressed: () => _deleteReminder(rem.id!),
-                        ),
-                      );
-                    },
-                  ),
-                ),
-              const SizedBox(height: 24),
+                const SizedBox(height: 24),
+              ],
 
               // Recent Transactions List
               Row(
@@ -825,11 +844,14 @@ class DashboardPageState extends State<DashboardPage> {
           ),
         ),
       ),
-      floatingActionButton: FloatingActionButton(
-        backgroundColor: const Color(0xFF118EEA),
-        foregroundColor: Colors.white,
-        onPressed: _showAddTransactionSheet,
-        child: const Icon(Icons.add),
+      floatingActionButton: Padding(
+        padding: const EdgeInsets.only(bottom: 80.0),
+        child: FloatingActionButton(
+          backgroundColor: const Color(0xFF2563EB),
+          foregroundColor: Colors.white,
+          onPressed: _showAddTransactionSheet,
+          child: const Icon(Icons.add),
+        ),
       ),
     );
   }
@@ -841,4 +863,38 @@ class DashboardPageState extends State<DashboardPage> {
     }
     return maxVal;
   }
+}
+
+class _BalanceCardBackgroundPainter extends CustomPainter {
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint1 = Paint()
+      ..color = Colors.white.withOpacity(0.08)
+      ..style = PaintingStyle.fill;
+
+    final paint2 = Paint()
+      ..color = Colors.white.withOpacity(0.04)
+      ..style = PaintingStyle.fill;
+
+    final path1 = Path();
+    path1.moveTo(size.width * 0.6, 0);
+    path1.quadraticBezierTo(size.width * 0.8, size.height * 0.5, size.width, size.height * 0.4);
+    path1.lineTo(size.width, 0);
+    path1.close();
+
+    final path2 = Path();
+    path2.moveTo(0, size.height * 0.5);
+    path2.quadraticBezierTo(size.width * 0.3, size.height * 0.9, size.width * 0.6, size.height);
+    path2.lineTo(0, size.height);
+    path2.close();
+
+    canvas.drawPath(path1, paint1);
+    canvas.drawPath(path2, paint2);
+
+    canvas.drawCircle(Offset(size.width * 0.85, size.height * 0.8), 40, paint2);
+    canvas.drawCircle(Offset(size.width * 0.15, size.height * 0.15), 60, paint1);
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
